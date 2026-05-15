@@ -31,8 +31,7 @@ def train_logreg(X, y, lr=0.0001, steps=1000):
     return w
 ```
 
-The Caltrain regression uses sklearn's `LinearRegression`, derives the
-Maximum Liklihood Estimate (MLE) for residual variance, and then computes the probability of large errors using a Normal CDF.
+Note that the Caltrain regression example (Tab 5) uses sklearn's `LinearRegression`, derives the Maximum Liklihood Estimate (MLE) for residual variance, and then computes the probability of large errors using a Normal CDF.
 
 ---
 
@@ -43,6 +42,7 @@ Data treatment: I loaded the data with pandas, separated features in the Label c
 
 Logistic Reg main function: took feature matrix X, labels y, a learning rate and # of steps, and appends a column of 1's to X so the bias term get learned alongisde feature wts. This allowed me to write Xw instead of Xw + b. Then I initialized all weights to zero, run gradient ascent for certain # of steps, and calculated probabilities with sigmoid(X @ w). So gradient = X.T@(y-h) with y-h being the error, and updated with weights += learning rate *gradient calculated. 
 
+Tab 2: Same idea as Part I but applied to 20 short nucleotide polymorphism (SNP) features. But I switched to gradient descent in (preds-y) instead of acsent (which would be (y-preds). Also the gradient was normalized by the sample count (encoded with len(y). This was important to make the calculations independent of sample size (it's like average), so that when we compare learning rate across diff dataset sizes, this algo still works without modifications. 
 ---
 
 ## Stack
