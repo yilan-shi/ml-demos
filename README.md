@@ -37,9 +37,7 @@ Note that the Caltrain regression example (Tab 5) uses sklearn's `LinearRegressi
 
 ## Details:
 
-**Part 1:** logistic regression from scratch using a small dataset (2 features only) from simple-train and train-test.csv. This is a gradient ascent on log-liklihood, moving weights in the direction that increases liklihood of observed labels. 
-
-Data treatment: I loaded the data with pandas, separated features in the Label column, and converted labels to floats. 
+**Part 1:** Logistic regression from scratch using a small dataset (2 features only) from simple-train and train-test.csv.     This is a gradient ascent on log-liklihood, moving weights in the direction that increases liklihood of observed labels.     Data treatment: I loaded the data with pandas, separated features in the Label column, and converted labels to floats. 
 
 Logistic Reg main function: took feature matrix X, labels y, a learning rate and # of steps, and appends a column of 1's to X so the bias term get learned alongisde feature wts. This allowed me to write Xw instead of Xw + b. Then I initialized all weights to zero, run gradient ascent for certain # of steps, and calculated probabilities with sigmoid(X @ w). So gradient = X.T@(y-h) with y-h being the error, and updated with weights += learning rate *gradient calculated. 
 
