@@ -116,7 +116,7 @@ def style_fig(fig):
 st.title("Machine Learning from Scratch")
 st.caption(
     "Logistic regression, calibration, and linear regression — "
-    "implemented in pure NumPy across five datasets. From prior CS hw assignment (S2025 quarter)"
+    "implemented in across five datasets. From prior CS hw assignment (S2025 quarter)"
 )
 
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
@@ -134,7 +134,7 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 with tab1:
     st.header("Logistic Regression from Scratch")
     st.markdown(
-        "Gradient ascent on log-likelihood, implemented in pure NumPy.  \n"
+        "Gradient ascent on log-likelihood, implemented in NumPy.  \n"
         "Update rule: `w += lr · Xᵀ(y − σ(Xw))`"
     )
 
