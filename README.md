@@ -1,4 +1,4 @@
-# ML from scratch demo ⚙️
+# ML from scratch - Interactive demo ⚙️
 
 Interactive demo of machine learning algorithms built from scratch (using Numpy). Has sliders for learning rate and training steps, with some stats/probability concepts.   
 Work is derived from own code from a prior CS hw assignment at Stanford (CS109, Professor Chris Piech, Spring 2025 quarter). 
