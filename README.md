@@ -42,7 +42,15 @@ Data treatment: I loaded the data with pandas, separated features in the Label c
 
 Logistic Reg main function: took feature matrix X, labels y, a learning rate and # of steps, and appends a column of 1's to X so the bias term get learned alongisde feature wts. This allowed me to write Xw instead of Xw + b. Then I initialized all weights to zero, run gradient ascent for certain # of steps, and calculated probabilities with sigmoid(X @ w). So gradient = X.T@(y-h) with y-h being the error, and updated with weights += learning rate *gradient calculated. 
 
-Tab 2: Same idea as Part I but applied to 20 short nucleotide polymorphism (SNP) features. But I switched to gradient descent in (preds-y) instead of acsent (which would be (y-preds). Also the gradient was normalized by the sample count (encoded with len(y). This was important to make the calculations independent of sample size (it's like average), so that when we compare learning rate across diff dataset sizes, this algo still works without modifications. 
+Tab 2: Similar as Part I but applied to 20 short nucleotide polymorphism (SNP) features. But I switched to gradient descent in (preds-y) instead of acsent (which would be (y-preds). Also the gradient was normalized by the sample count (encoded with len(y). This was important to make the calculations independent of sample size (it's like average), so that when we compare learning rate across diff dataset sizes, this algo still works without modifications. 
+
+Tab 3: The goal was simpler here so I only had a single script with no wrapper and frills. There were 22 medical features and the assignment's aim was selecting learning rate by grid search. I looped over 8 proposed learning rates; per each rate, I initialized weights to zero, ran 1000 steps of normalized gradient descent averaged/divided by sample size, and then updated with weights += eta*gradient. Finally I evaluated test accuracy and kept best one. 
+
+Weights were initialized as a column vector, while other files were initialized as non-vector/1D. 
+
+Tab 4: This was a very focused sub-problem in the homework, and it asked "When logistic regression stays at 60% probability, does positive rate among the predictions match 60%?". For `get_bucket()`, I took predicted prob and slotted it to the nearest 6 buckets, and used `min(buckets, key = lambda x: abs(x-pr))` to get closest bucket value. Then the bucket function was applied to every row in ancestry-calibration.csv's `LogRegPr` col, and filtered out only rows in the 0.6 bucket. This gives the ratio of true positives that match 60% prediction. 
+
+
 ---
 
 ## Stack
