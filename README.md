@@ -8,7 +8,7 @@ Work is derived from own code from a prior CS hw assignment at Stanford (CS109, 
 | Tab | Algorithm | Dataset | What it shows |
 |-----|-----------|---------|---------------|
 | Logistic Regression | Gradient ascent, NumPy only | 2-feature toy | Decision boundary, convergence curve |
-| Ancestry Classifier | Logistic regression on SNPs | 20-column binary genomic data | Feature importance by weight magnitude |
+| Ancestry Classifier | Logistic regression on SNPs | 20-column binary genomic data | Feature by weight magnitude |
 | Heart Disease | Learning rate grid search | 22 medical features, 79 patients | Best η from 8 candidates |
 | Calibration | Bucket analysis | Ancestry calibration set | Empirical vs predicted probability |
 | Caltrain Ridership | Linear regression + MLE | 1,641 Caltrain observations | P(model is off by > 20 passengers) |
