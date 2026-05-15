@@ -1,12 +1,9 @@
 # ML from Scratch — CS109 Demos
 
-Interactive demos of machine learning algorithms built in pure NumPy,
-from Stanford CS109 (Probability for Computer Scientists). Taken by Yilan S2025 quarter :). 
+Interactive demo of ML algorithms built from scratch. 
+Work derived from own written code from a prior CS hw assignment at Stanford (CS109, Professor Chris Piech, Spring 2025 quarter). 
 
-
-## What's Here: 
-
-Five demos across five real (anonymized) datasets:
+## Five demos across five (anonymized) datasets:
 
 | Tab | Algorithm | Dataset | What it shows |
 |-----|-----------|---------|---------------|
