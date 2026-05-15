@@ -55,7 +55,4 @@ Python · NumPy · pandas · matplotlib · Streamlit · scikit-learn · scipy
 
 The source code is in the .py file and encrypted. Sorry, it is for academic integrity purposes. Can share upon request if needed for evaluation of jobs, internships, and fellowships. Please contact yilan.shi@gmail.com. Thanks! 
 
-## What this repo does not contain
-
-Homework solutions, my own training code, or graded submissions to respect academic integrity rules. This is just a demo and high level description of what I learned. 
-Datasets are bundled as CSV files in `data/`.
+The original code is encrypted to respect academic integrity policies, so only a front-end demo is shown here. For consideration of fellowships, jobs, internships...etc, please contact yilan.shi@gmail.com. Thanks!
