@@ -1,435 +1,418 @@
-import streamlit as st
-import numpy as np
-import pandas as pd
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error
-from scipy.stats import norm
-import os
-
-st.set_page_config(page_title="ML from Scratch", layout="wide", page_icon="🧬")
-
-# ── core implementations (no sklearn for logistic regression) ─────────────────
-#
-# Three distinct training functions, because the original PSET files use three
-# different setups. Each is kept faithful to the corresponding submitted file
-# rather than unified, so the demo reflects the actual work.
-
-def sigmoid(z):
-    return 1 / (1 + np.exp(-z))
-
-def train_logreg(X, y, lr=0.0001, steps=1000):
-    """Logistic regression via gradient ASCENT on log-likelihood, pure NumPy.
-    Mirrors PSET7_2.py / PSET7_3_3.py: un-normalized gradient, bias appended.
-    Update rule: w += lr * Xᵀ(y − σ(Xw))"""
-    X_b = np.hstack([X, np.ones((X.shape[0], 1))])
-    w = np.zeros(X_b.shape[1])
-    lls = []
-    for _ in range(steps):
-        h = sigmoid(X_b @ w)
-        w += lr * (X_b.T @ (y - h))
-        ll = np.mean(y * np.log(h + 1e-10) + (1 - y) * np.log(1 - h + 1e-10))
-        lls.append(ll)
-    return w, lls
-
-def train_logreg_ancestry(X, y, lr=0.0001, steps=1000):
-    """Logistic regression mirroring PSET7_3_23andme_ancestry.py exactly:
-    bias column appended via hstack, NORMALIZED gradient (divided by len(y)),
-    gradient DESCENT on (preds - y).
-    Update rule: w -= lr * Xᵀ(σ(Xw) − y) / n
-    The log-likelihood list is recorded only for any plotting — it does not
-    affect the weights or accuracy, and is not part of the original file."""
-    X_b = np.hstack([X, np.ones((X.shape[0], 1))])
-    w = np.zeros(X_b.shape[1])
-    lls = []
-    for _ in range(steps):
-        h = sigmoid(X_b @ w)
-        grad = X_b.T @ (h - y) / len(y)
-        w -= lr * grad
-        ll = np.mean(y * np.log(h + 1e-10) + (1 - y) * np.log(1 - h + 1e-10))
-        lls.append(ll)
-    return w, lls
-
-def train_logreg_heart(X, y, lr, steps=1000):
-    """Logistic regression mirroring PSET7_4.py exactly: NO bias column,
-    NORMALIZED gradient (divided by sample count), gradient DESCENT on (h - y).
-    Update rule: w -= lr * Xᵀ(σ(Xw) − y) / n
-    The log-likelihood list is recorded only for the convergence plot — it does
-    not affect the weights or accuracy, and is not part of the original PSET7_4.py."""
-    w = np.zeros(X.shape[1])
-    y_col = y.reshape(-1, 1) if y.ndim == 1 else y
-    w = w.reshape(-1, 1)
-    lls = []
-    for _ in range(steps):
-        h = sigmoid(X @ w)
-        gradient = X.T @ (h - y_col) / y_col.size
-        w -= lr * gradient
-        ll = np.mean(y_col * np.log(h + 1e-10) + (1 - y_col) * np.log(1 - h + 1e-10))
-        lls.append(ll)
-    return w.flatten(), lls
-
-def predict_proba(X, w):
-    """Prediction for the bias-appended models (Tab 1, Tab 2)."""
-    X_b = np.hstack([X, np.ones((X.shape[0], 1))])
-    return sigmoid(X_b @ w)
-
-def predict_proba_nobias(X, w):
-    """Prediction for the PSET7_4.py-style model: no bias column appended."""
-    return sigmoid(X @ w)
-
-def acc(probas, y_true):
-    return np.mean((probas >= 0.5).astype(int) == y_true)
-
-DATA = "data"
-
-def load(name):
-    path = os.path.join(DATA, name)
-    if not os.path.exists(path):
-        st.error(f"Missing file: {path}. Place CSV files in the data/ folder.")
-        st.stop()
-    return pd.read_csv(path)
-
-# ── palette ───────────────────────────────────────────────────────────────────
-
-BLUE   = "#4c60f0"
-DBLUE  = "#1a2fa8"
-LBLUE  = "#b8c1ff"
-RED    = "#e24b4a"
-GRAY   = "#888"
-
-def style_fig(fig):
-    fig.patch.set_facecolor("none")
-    for ax in fig.axes:
-        ax.set_facecolor("none")
-        ax.spines[["top","right"]].set_visible(False)
-        ax.spines[["bottom","left"]].set_color("#cccccc")
-        ax.tick_params(colors="#555", labelsize=9)
-        ax.xaxis.label.set_color("#555")
-        ax.yaxis.label.set_color("#555")
-        ax.title.set_color("#222")
-    return fig
-
-# ── header ─────────────────────────────────────────────────────────────────────
-
-st.title("Machine Learning from Scratch")
-st.caption(
-    "Logistic regression, calibration, and linear regression — "
-    "implemented in across five datasets. From prior CS hw assignment (S2025 quarter)"
-)
-
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "① Logistic Regression",
-    "② Ancestry Classifier",
-    "③ Heart Disease",
-    "④ Calibration",
-    "⑤ Caltrain Regression",
-])
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# TAB 1 — simple logistic regression  (mirrors PSET7_2.py)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-with tab1:
-    st.header("Logistic Regression from Scratch")
-    st.markdown(
-        "Gradient ascent on log-likelihood, implemented in NumPy.  \n"
-        "Update rule: `w += lr · Xᵀ(y − σ(Xw))`"
-    )
-
-    train1 = load("simple-train.csv")
-    test1  = load("simple-test.csv")
-    X_tr1  = train1.drop("Label", axis=1).values
-    y_tr1  = train1["Label"].values.astype(float)
-    X_te1  = test1.drop("Label", axis=1).values
-    y_te1  = test1["Label"].values.astype(float)
-
-    c_ctrl, c_plot = st.columns([1, 2])
-
-    with c_ctrl:
-        lr1    = st.select_slider("Learning rate", [0.0001, 0.001, 0.01, 0.1], 0.0001, key="lr1")
-        steps1 = st.slider("Training steps", 100, 3000, 1000, 100, key="s1")
-
-    w1, lls1 = train_logreg(X_tr1, y_tr1, lr=lr1, steps=steps1)
-    p1 = predict_proba(X_te1, w1)
-
-    with c_ctrl:
-        st.metric("Test accuracy", f"{acc(p1, y_te1):.1%}")
-        st.metric("w₁  (x1)", f"{w1[0]:.5f}")
-        st.metric("w₂  (x2)", f"{w1[1]:.5f}")
-        st.metric("Bias", f"{w1[2]:.5f}")
-
-    with c_plot:
-        fig, axes = plt.subplots(1, 2, figsize=(9, 3.5))
-
-        axes[0].plot(lls1, color=BLUE, linewidth=1.5)
-        axes[0].set_xlabel("Step"); axes[0].set_ylabel("Log-likelihood")
-        axes[0].set_title("Training convergence"); axes[0].grid(alpha=.2)
-
-        xs = np.linspace(-0.3, 1.3, 200)
-        if abs(w1[1]) > 1e-8:
-            boundary = -(w1[0] * xs + w1[2]) / w1[1]
-            axes[1].plot(xs, boundary, "k-", lw=1.4, label="Decision boundary")
-        clrs = [RED if y == 0 else BLUE for y in y_te1]
-        axes[1].scatter(X_te1[:, 0], X_te1[:, 1], c=clrs, s=80, zorder=5,
-                        edgecolors="white", lw=0.5)
-        axes[1].set_xlabel("x1"); axes[1].set_ylabel("x2")
-        axes[1].set_title("Test set + decision boundary")
-        axes[1].legend(fontsize=9); axes[1].grid(alpha=.2)
-
-        plt.tight_layout()
-        st.pyplot(style_fig(fig)); plt.close()
-
-    with st.expander("View raw data"):
-        d1, d2 = st.columns(2)
-        d1.caption("Train"); d1.dataframe(train1, use_container_width=True)
-        d2.caption("Test");  d2.dataframe(test1,  use_container_width=True)
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# TAB 2 — ancestry classifier  (mirrors PSET7_3_23andme_ancestry.py)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-with tab2:
-    st.header("Ancestry Classifier")
-    st.markdown(
-        "Logistic regression on 20 binary SNP (single-nucleotide polymorphism) "
-        "features — the same structure 23andMe uses for ancestry prediction.  \n"
-        "Normalized gradient descent: `w -= lr · Xᵀ(σ(Xw) − y) / n`"
-    )
-
-    train2 = load("ancestry-train.csv")
-    test2  = load("ancestry-test.csv")
-    X_tr2  = train2.drop("Label", axis=1).values
-    y_tr2  = train2["Label"].values.astype(float)
-    X_te2  = test2.drop("Label", axis=1).values
-    y_te2  = test2["Label"].values.astype(float)
-    feat2  = [c for c in train2.columns if c != "Label"]
-
-    c_ctrl2, c_plot2 = st.columns([1, 2])
-
-    with c_ctrl2:
-        lr2    = st.select_slider("Learning rate", [0.00001, 0.0001, 0.001], 0.0001, key="lr2")
-        steps2 = st.slider("Training steps", 500, 5000, 1000, 500, key="s2")
-
-    w2, _ = train_logreg_ancestry(X_tr2, y_tr2, lr=lr2, steps=steps2)
-    p2    = predict_proba(X_te2, w2)
-    fw2   = w2[:-1]
-    best_snp = feat2[np.argmax(np.abs(fw2))]
-
-    with c_ctrl2:
-        st.metric("Test accuracy", f"{acc(p2, y_te2):.1%}")
-        st.metric("Most predictive SNP", best_snp)
-        st.metric("Its weight", f"{fw2[np.argmax(np.abs(fw2))]:.5f}")
-        st.metric("Bias term", f"{w2[-1]:.5f}")
-
-    with c_plot2:
-        fig2, axes2 = plt.subplots(1, 2, figsize=(9, 3.5))
-
-        si = np.argsort(np.abs(fw2))[::-1][:10]
-        colors_bar = [BLUE if fw2[i] > 0 else RED for i in si]
-        axes2[0].barh([feat2[i] for i in si], [fw2[i] for i in si], color=colors_bar)
-        axes2[0].axvline(0, color="black", lw=0.5)
-        axes2[0].set_xlabel("Weight"); axes2[0].set_title("Top 10 SNP weights")
-        axes2[0].grid(alpha=.2, axis="x")
-
-        axes2[1].hist(p2[y_te2 == 0], bins=20, alpha=0.6, color=RED,    density=True, label="Class 0")
-        axes2[1].hist(p2[y_te2 == 1], bins=20, alpha=0.6, color=BLUE,   density=True, label="Class 1")
-        axes2[1].axvline(0.5, color="black", ls="--", lw=1, label="Threshold 0.5")
-        axes2[1].set_xlabel("Predicted probability"); axes2[1].set_ylabel("Density")
-        axes2[1].set_title("Score distribution by class")
-        axes2[1].legend(fontsize=9); axes2[1].grid(alpha=.2)
-
-        plt.tight_layout()
-        st.pyplot(style_fig(fig2)); plt.close()
-
-    st.divider()
-    st.subheader("Try a prediction")
-    st.caption("Enter a 20-bit SNP profile (comma-separated 0s and 1s)")
-    snp_in = st.text_input("SNP values", "1,0,0,0,0,0,0,1,1,1,0,1,0,1,0,0,1,0,1,1")
-    try:
-        snp_arr = np.array([float(x.strip()) for x in snp_in.split(",")])
-        if len(snp_arr) == 20:
-            prob2 = predict_proba(snp_arr.reshape(1, -1), w2)[0]
-            st.metric("P(Class 1)", f"{prob2:.4f}")
-            st.progress(float(prob2))
-        else:
-            st.warning(f"Need 20 values, got {len(snp_arr)}")
-    except Exception:
-        st.error("Enter 20 comma-separated 0/1 values")
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# TAB 3 — heart disease: learning rate search  (mirrors PSET7_4.py)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-with tab3:
-    st.header("Heart Disease Classifier — Learning Rate Search")
-    st.markdown(
-        "22-feature medical dataset. Grid search over 8 learning rates; "
-        "best selected by test accuracy.  \n"
-        "No bias column; normalized gradient descent: `w -= η · Xᵀ(σ(Xw) − y) / n`"
-    )
-
-    train3 = load("heart-train.csv")
-    test3  = load("heart-test.csv")
-    X_tr3  = train3.iloc[:, :-1].values
-    y_tr3  = train3.iloc[:,  -1].values.astype(float)
-    X_te3  = test3.iloc[:, :-1].values
-    y_te3  = test3.iloc[:,  -1].values.astype(float)
-
-    lrs3 = [0.001, 0.01, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
-    rows3 = []
-    for eta in lrs3:
-        w3, _ = train_logreg_heart(X_tr3, y_tr3, lr=eta, steps=1000)
-        rows3.append({"η": eta, "Test accuracy": acc(predict_proba_nobias(X_te3, w3), y_te3)})
-    df3 = pd.DataFrame(rows3)
-    best3 = df3.loc[df3["Test accuracy"].idxmax()]
-
-    c_ctrl3, c_plot3 = st.columns([1, 2])
-
-    with c_ctrl3:
-        st.metric("Best η", str(best3["η"]))
-        st.metric("Best accuracy", f"{best3['Test accuracy']:.1%}")
-        st.metric("Training samples", len(train3))
-        st.metric("Features", X_tr3.shape[1])
-        st.dataframe(
-            df3.style.highlight_max(subset=["Test accuracy"], color=LBLUE)
-                     .format({"η": "{}", "Test accuracy": "{:.3f}"}),
-            use_container_width=True
-        )
-
-    with c_plot3:
-        fig3, axes3 = plt.subplots(1, 2, figsize=(9, 3.5))
-
-        bar_colors = [DBLUE if eta == best3["η"] else LBLUE for eta in lrs3]
-        axes3[0].bar([str(r) for r in lrs3], df3["Test accuracy"], color=bar_colors)
-        axes3[0].set_xlabel("Learning rate η"); axes3[0].set_ylabel("Accuracy")
-        axes3[0].set_title("Grid search results"); axes3[0].set_ylim(0, 1)
-        axes3[0].grid(alpha=.2, axis="y")
-
-        _, lls_best3  = train_logreg_heart(X_tr3, y_tr3, lr=best3["η"], steps=1000)
-        worst3_eta = lrs3[df3["Test accuracy"].values.argmin()]
-        _, lls_worst3 = train_logreg_heart(X_tr3, y_tr3, lr=worst3_eta, steps=1000)
-        axes3[1].plot(lls_best3,  color=DBLUE, lw=1.5, label=f"Best η={best3['η']}")
-        axes3[1].plot(lls_worst3, color=RED,   lw=1,   ls="--", alpha=.7, label=f"Worst η={worst3_eta}")
-        axes3[1].set_xlabel("Step"); axes3[1].set_ylabel("Log-likelihood")
-        axes3[1].set_title("Convergence: best vs worst η")
-        axes3[1].legend(fontsize=9); axes3[1].grid(alpha=.2)
-
-        plt.tight_layout()
-        st.pyplot(style_fig(fig3)); plt.close()
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# TAB 4 — probability calibration  (mirrors PSET7_5.py)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-with tab4:
-    st.header("Probability Calibration")
-    st.markdown(
-        "A calibrated model predicts 60% probability only when ~60% of those examples "
-        "are truly positive. This measures whether the logistic regression output "
-        "is a trustworthy probability."
-    )
-
-    cal4 = load("ancestry-calibration.csv")
-    buckets4 = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
-
-    def nearest_bucket(p):
-        return min(buckets4, key=lambda x: abs(x - p))
-
-    cal4["bucket"] = cal4["LogRegPr"].apply(nearest_bucket)
-
-    rows4 = []
-    for b in buckets4:
-        sub = cal4[cal4["bucket"] == b]
-        if len(sub):
-            rows4.append({"Predicted bucket": b, "Empirical rate": sub["Label"].mean(), "N": len(sub)})
-    df4 = pd.DataFrame(rows4)
-
-    c_ctrl4, c_plot4 = st.columns([1, 2])
-
-    with c_ctrl4:
-        st.dataframe(
-            df4.style.format({"Predicted bucket": "{:.1f}", "Empirical rate": "{:.5f}", "N": "{}"}),
-            use_container_width=True
-        )
-        b06 = df4[df4["Predicted bucket"] == 0.6]
-        if not b06.empty:
-            st.metric("Bucket 0.6 empirical rate", f"{b06['Empirical rate'].values[0]:.5f}")
-
-    with c_plot4:
-        fig4, ax4 = plt.subplots(figsize=(5, 4.5))
-        ax4.plot([0, 1], [0, 1], "k--", lw=1, alpha=.5, label="Perfect calibration")
-        ax4.scatter(df4["Predicted bucket"], df4["Empirical rate"],
-                    s=df4["N"] * 2.5, c=BLUE, alpha=.85, zorder=5,
-                    edgecolors="white", lw=0.5)
-        ax4.plot(df4["Predicted bucket"], df4["Empirical rate"],
-                 color=BLUE, lw=1.5, label="Our model")
-        ax4.set_xlabel("Predicted probability (bucket)")
-        ax4.set_ylabel("Empirical positive rate")
-        ax4.set_title("Calibration plot\n(bubble size = samples in bucket)")
-        ax4.legend(fontsize=9); ax4.grid(alpha=.2)
-        ax4.set_xlim(-0.05, 1.05); ax4.set_ylim(-0.05, 1.05)
-        plt.tight_layout()
-        st.pyplot(style_fig(fig4)); plt.close()
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# TAB 5 — Caltrain: linear regression + MLE residual inference
-#         (mirrors PSET7_7a.py + PSET7_7b.py)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-with tab5:
-    st.header("Caltrain Ridership — Linear Regression + Probabilistic Error")
-    st.markdown(
-        "Predict passengers per hour from 7 features. Then: estimate residual "
-        "variance with MLE and compute P(model is wrong by > 20 passengers)."
-    )
-
-    train5 = load("caltrain-train.csv")
-    test5  = load("caltrain-test.csv")
-
-    feats5 = ["is_summer", "is_weekend", "is_holiday", "busy_time_of_day",
-              "north_or_southbound", "temperature", "chance_of_rain"]
-
-    X_tr5 = train5[feats5].values; y_tr5 = train5["passengers_per_hour"].values
-    X_te5 = test5[feats5].values;  y_te5 = test5["passengers_per_hour"].values
-
-    m5 = LinearRegression().fit(X_tr5, y_tr5)
-    pred5 = m5.predict(X_te5)
-    resid5 = y_te5 - pred5
-    rmse5  = np.sqrt(mean_squared_error(y_te5, pred5))
-    sigma5 = np.sqrt(np.mean(resid5 ** 2))
-    p_off  = 2 * (1 - norm.cdf(20 / sigma5))
-
-    c_ctrl5, c_plot5 = st.columns([1, 2])
-
-    with c_ctrl5:
-        st.metric("RMSE", f"{rmse5:.2f} passengers")
-        st.metric("MLE σ² (residual variance)", f"{np.mean(resid5**2):.2f}")
-        st.metric("MLE σ", f"{sigma5:.2f}")
-        st.metric("P(|error| > 20 passengers)", f"{p_off:.6f}")
-        coef5 = pd.DataFrame({"Feature": feats5, "Coefficient": m5.coef_})
-        coef5 = coef5.reindex(coef5["Coefficient"].abs().sort_values(ascending=False).index)
-        st.dataframe(coef5.style.format({"Coefficient": "{:.4f}"}), use_container_width=True)
-
-    with c_plot5:
-        fig5, axes5 = plt.subplots(1, 2, figsize=(9, 3.5))
-
-        axes5[0].scatter(y_te5, pred5, alpha=.35, color=BLUE, s=12, edgecolors="none")
-        lim = [min(y_te5.min(), pred5.min()), max(y_te5.max(), pred5.max())]
-        axes5[0].plot(lim, lim, "k--", lw=1, label="y = ŷ")
-        axes5[0].set_xlabel("Actual passengers/hr"); axes5[0].set_ylabel("Predicted passengers/hr")
-        axes5[0].set_title("Predicted vs actual"); axes5[0].legend(fontsize=9)
-        axes5[0].grid(alpha=.2)
-
-        xr = np.linspace(resid5.min() - 10, resid5.max() + 10, 300)
-        axes5[1].hist(resid5, bins=40, density=True, color=LBLUE, edgecolor="none", label="Residuals")
-        axes5[1].plot(xr, norm.pdf(xr, 0, sigma5), color=DBLUE, lw=2, label=f"N(0, σ={sigma5:.1f})")
-        axes5[1].axvline( 20, color=RED, ls="--", lw=1.2, label="±20 threshold")
-        axes5[1].axvline(-20, color=RED, ls="--", lw=1.2)
-        axes5[1].set_xlabel("Residual (actual − predicted)"); axes5[1].set_ylabel("Density")
-        axes5[1].set_title(f"Residuals + Gaussian fit\nP(|err|>20) = {p_off:.4f}")
-        axes5[1].legend(fontsize=8); axes5[1].grid(alpha=.2)
-
-        plt.tight_layout()
-        st.pyplot(style_fig(fig5)); plt.close()
+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
+Ls/mbLcWFwE6QWGYTG0cCw==
