@@ -60,7 +60,7 @@ Weights were initialized as a column vector, while other files were initialized 
 
 ## Stack
 
-Python · NumPy · pandas · matplotlib · Streamlit · scikit-learn · scipy
+Python · NumPy · pandas · matplotlib · Streamlit · scikit-learn (only for 1 assignment) · scipy
 
 ---
 
