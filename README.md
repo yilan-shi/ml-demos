@@ -1,7 +1,7 @@
-# ML from Scratch — CS109 Demos
+# ML from Scratch - interactive demo based on Yilan's code and work from a past HW assignment
 
-Interactive demo of ML algorithms built from scratch. 
-Work derived from own written code from a prior CS hw assignment at Stanford (CS109, Professor Chris Piech, Spring 2025 quarter). 
+Interactive demo of machine learning algorithms built from scratch. Some stats/probability concepts here too. 
+Work derived from own code from a prior CS hw assignment at Stanford (CS109, Professor Chris Piech, Spring 2025 quarter). 
 
 ## Five demos across five (anonymized) datasets:
 
