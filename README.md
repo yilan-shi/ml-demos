@@ -1,9 +1,9 @@
-# ML from Scratch - interactive demo with parameter slides and cool graphs
+# ML from scratch demo ⚙️
 
-Interactive demo of machine learning algorithms built from scratch. Some stats/probability concepts here too. 
-Work derived from own code from a prior CS hw assignment at Stanford (CS109, Professor Chris Piech, Spring 2025 quarter). 
+Interactive demo of machine learning algorithms built from scratch (using Numpy). Has sliders for learning rate and training steps, with some stats/probability concepts.   
+Work is derived from own code from a prior CS hw assignment at Stanford (CS109, Professor Chris Piech, Spring 2025 quarter). 
 
-## Five demos across five (anonymized) datasets:
+## Five tabs showing work from five (anonymized) datasets:
 
 | Tab | Algorithm | Dataset | What it shows |
 |-----|-----------|---------|---------------|
@@ -52,6 +52,8 @@ streamlit run app.py
 Python · NumPy · pandas · matplotlib · Streamlit · scikit-learn · scipy
 
 ---
+
+The source code is in the .py file and encrypted. Sorry, it is for academic integrity purposes. Can share upon request if needed for evaluation of jobs, internships, and fellowships. Please contact yilan.shi@gmail.com. Thanks! 
 
 ## What this repo does not contain
 
