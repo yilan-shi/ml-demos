@@ -1,4 +1,4 @@
-# ML from Scratch - interactive demo based on Yilan's code and work from a past HW assignment
+# ML from Scratch - interactive demo with parameter slides and cool graphs
 
 Interactive demo of machine learning algorithms built from scratch. Some stats/probability concepts here too. 
 Work derived from own code from a prior CS hw assignment at Stanford (CS109, Professor Chris Piech, Spring 2025 quarter). 
